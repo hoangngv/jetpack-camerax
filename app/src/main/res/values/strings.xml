@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CameraX-vSmart</string>
+    <string name="unable_open_photo">Unable to open photo</string>
 </resources>
