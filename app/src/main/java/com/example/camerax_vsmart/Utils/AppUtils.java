@@ -6,7 +6,7 @@ import java.io.File;
 
 public class AppUtils {
     public static String getFileDir(String fileName) {
-        File file = new File(String.valueOf(Environment.getExternalStorageDirectory()));
+        File file = new File(Environment.getExternalStorageDirectory(), "CAMERA-VSMART");
         if (!file.exists()) {
             if (!file.mkdirs()) {
                 DebugLog.d("Can't create file path");

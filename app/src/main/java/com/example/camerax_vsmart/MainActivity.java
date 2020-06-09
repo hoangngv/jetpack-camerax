@@ -26,6 +26,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.util.Rational;
 import android.util.Size;
 import android.view.Surface;
@@ -35,8 +36,10 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.camerax_vsmart.Utils.AppConstants;
+import com.example.camerax_vsmart.Utils.AppUtils;
 import com.example.camerax_vsmart.Utils.DebugLog;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -103,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                 DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.getDefault());
 
                 final String fileName = "IMG_" + dateFormat.format(calendar.getTime()) + ".jpg";
-                final String filePath = Environment.getExternalStorageDirectory() + "/" + fileName;
+                final String filePath = AppUtils.getFileDir(fileName);
                 File file = new File(filePath);
 
                 imageCapture.takePicture(file, new ImageCapture.OnImageSavedListener() {
@@ -217,8 +220,8 @@ public class MainActivity extends AppCompatActivity {
         Bitmap mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
 
         // overwrite
-        File canvasDir = new File(Environment.getExternalStorageDirectory() + "/" + "CanvasImages");
-        canvasDir.mkdirs();
+//        File canvasDir = new File(Environment.getExternalStorageDirectory() + "/" + "CanvasImages");
+//        canvasDir.mkdirs();
 
         File file = new File(imagePath);
         if (file.exists())
@@ -236,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
             canvas.drawBitmap(mutableBitmap, 0, 0, paint);
             canvas.drawText(text, posX, posY, paint);
 
-            mutableBitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
+            mutableBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
 
             DebugLog.d("[Canvas drawing] File size after being compressed: " + file.length());
 
@@ -245,6 +248,8 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        compressImage(imagePath);
     }
 
     private static Bitmap modifyOrientation(Bitmap bitmap, String imageAbsolutePath) throws IOException {
@@ -301,5 +306,48 @@ public class MainActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
+    }
+
+    private static void compressImage(String fileAbsolutePath) {
+        Bitmap bitmap = BitmapFactory.decodeFile(fileAbsolutePath);
+
+        File f = new File(fileAbsolutePath);
+        if(f.exists()){
+            f.delete();
+        }
+
+        int MAX_IMAGE_SIZE = 1000 * 1024;
+        int streamLength = MAX_IMAGE_SIZE;
+        int compressQuality = 110;
+        ByteArrayOutputStream bmpStream = new ByteArrayOutputStream();
+
+        while (streamLength >= MAX_IMAGE_SIZE && compressQuality > 60) {
+
+            try {
+                bmpStream.flush(); //to avoid out of memory error
+                bmpStream.reset();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            compressQuality -= 10;
+            bitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, bmpStream);
+
+            byte[] bmpPicByteArray = bmpStream.toByteArray();
+            streamLength = bmpPicByteArray.length;
+
+            DebugLog.d("Compressed Image Size: " + streamLength);
+        }
+
+        FileOutputStream fo;
+
+        try {
+            fo = new FileOutputStream(f);
+            fo.write(bmpStream.toByteArray());
+            fo.flush();
+            fo.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
