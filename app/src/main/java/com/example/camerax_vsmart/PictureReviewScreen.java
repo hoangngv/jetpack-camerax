@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.example.camerax_vsmart.Utils.AppConstants;
 import com.example.camerax_vsmart.Utils.AppUtils;
@@ -15,11 +17,13 @@ import androidx.appcompat.app.AppCompatActivity;
 public class PictureReviewScreen extends AppCompatActivity {
 
     private ImageView mImageView;
+    private boolean mDoubleBackPressed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_picture_review);
+        DebugLog.d("[Capture Photo] Review photo activity launched");
         initComponents();
         displayImage();
     }
@@ -36,5 +40,16 @@ public class PictureReviewScreen extends AppCompatActivity {
         DebugLog.d(AppUtils.getFileDir(picName));
         mImageView.setImageBitmap(bitmap);
         DebugLog.d("Displaying image");
+    }
+
+    @Override
+    public void onBackPressed() {
+        switchToMainScreen();
+    }
+
+    private void switchToMainScreen() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

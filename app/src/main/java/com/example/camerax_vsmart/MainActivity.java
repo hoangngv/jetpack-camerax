@@ -22,17 +22,16 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
 import android.util.Rational;
 import android.util.Size;
+import android.view.Display;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.camerax_vsmart.Utils.AppConstants;
@@ -48,19 +47,22 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String DATE_FORMAT = "yyMMdd_kkmmss";
     private int REQUEST_CODE_PERMISSIONS = 101;
     private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
     TextureView textureView;
+    private ImageButton btnBack;
+    private ImageView ivRectFrame;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textureView = findViewById(R.id.tv_camera_preview);
+        initComponents();
+        initEvents();
 
         if(allPermissionsGranted()){
             startCamera(); //start camera if permission has been granted by user
@@ -69,12 +71,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void initComponents(){
+        textureView = findViewById(R.id.tv_camera_preview);
+        btnBack = findViewById(R.id.btn_back);
+        ivRectFrame = findViewById(R.id.iv_frame_camera);
+    }
+
+    private void initEvents(){
+        btnBack.setOnClickListener(this);
+    }
+
     private void startCamera() {
 
         CameraX.unbindAll();
 
         Rational aspectRatio = new Rational (textureView.getWidth(), textureView.getHeight());
         Size screen = new Size(textureView.getWidth(), textureView.getHeight()); //size of the screen
+
+        DebugLog.d("("+ screen.getWidth() + ", " + screen.getHeight() + ")");
 
         PreviewConfig pConfig = new PreviewConfig.Builder().setTargetAspectRatio(aspectRatio).setTargetResolution(screen).build();
         Preview preview = new Preview(pConfig);
@@ -102,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+                DebugLog.d("[Capture Photo] Capture button pressed");
                 Calendar calendar = Calendar.getInstance();
                 DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.getDefault());
 
@@ -113,13 +128,14 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onImageSaved(@NonNull File file) {
+                        DebugLog.d("[Capture Photo] Run into onImageSaved");
                         String msg = "Pic captured at " + file.getAbsolutePath();
                         Toast.makeText(getBaseContext(), msg,Toast.LENGTH_LONG).show();
 
                         DebugLog.d("[Canvas drawing] File size before being compressed: " + file.length());
 
                         writeTextOntoImage(filePath, "(Long: X, Lat: Y)", 120, Color.GREEN, 200, 200);
-                        reviewPicture(fileName);
+                        //reviewPicture(fileName);
                     }
 
                     @Override
@@ -134,17 +150,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //bind to lifecycle:
+        //bind to lifecycle
         CameraX.bindToLifecycle((LifecycleOwner)this, preview, imageCapture);
     }
 
     private void reviewPicture(String imgName) {
         if (imgName != null) {
-            DebugLog.d("Reviewing photo");
+            DebugLog.d("[Capture Photo] Prepare to review photo");
             Intent intent = new Intent(this, PictureReviewScreen.class);
             intent.putExtra(AppConstants.Common.IMG_NAME, imgName);
             startActivity(intent);
-            finish();
+            //finish();
         } else {
             Toast.makeText(this, R.string.unable_open_photo, Toast.LENGTH_SHORT).show();
         }
@@ -207,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void writeTextOntoImage(String imagePath, String text, int textSize, int textColor, int posX, int posY) {
+        DebugLog.d("[Capture Photo] Writing text onto image");
 
         Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
 
@@ -218,38 +235,57 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Bitmap mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        bitmap.recycle();
 
         // overwrite
-//        File canvasDir = new File(Environment.getExternalStorageDirectory() + "/" + "CanvasImages");
-//        canvasDir.mkdirs();
-
         File file = new File(imagePath);
         if (file.exists())
             file.delete();
 
         try {
+            DebugLog.d("Run into Canvas");
             FileOutputStream out = new FileOutputStream(file);
 
             Canvas canvas = new Canvas(mutableBitmap);
             Paint paint = new Paint();
             paint.setColor(textColor);
             paint.setTextSize(textSize);
-            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
+            paint.setStyle(Paint.Style.FILL);
 
             canvas.drawBitmap(mutableBitmap, 0, 0, paint);
             canvas.drawText(text, posX, posY, paint);
 
-            mutableBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            // compress image
+            int MAX_IMAGE_SIZE = 1000 * 1024;
+            int streamLength = MAX_IMAGE_SIZE;
+            int compressQuality = 100;
+            ByteArrayOutputStream bmpStream = new ByteArrayOutputStream();
 
-            DebugLog.d("[Canvas drawing] File size after being compressed: " + file.length());
+            while (streamLength >= MAX_IMAGE_SIZE && compressQuality > 60) {
 
+                try {
+                    bmpStream.flush(); //to avoid out of memory error
+                    bmpStream.reset();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                compressQuality -= 10;
+                mutableBitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, bmpStream);
+
+                streamLength = bmpStream.size();
+
+                DebugLog.d("Compressed Image Size: " + streamLength);
+            }
+
+            DebugLog.d("[Canvas drawing] File size after being compressed: " + bmpStream.size());
+
+            out.write(bmpStream.toByteArray());
             out.flush();
             out.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        compressImage(imagePath);
     }
 
     private static Bitmap modifyOrientation(Bitmap bitmap, String imageAbsolutePath) throws IOException {
@@ -308,46 +344,8 @@ public class MainActivity extends AppCompatActivity {
         decorView.setSystemUiVisibility(uiOptions);
     }
 
-    private static void compressImage(String fileAbsolutePath) {
-        Bitmap bitmap = BitmapFactory.decodeFile(fileAbsolutePath);
-
-        File f = new File(fileAbsolutePath);
-        if(f.exists()){
-            f.delete();
-        }
-
-        int MAX_IMAGE_SIZE = 1000 * 1024;
-        int streamLength = MAX_IMAGE_SIZE;
-        int compressQuality = 110;
-        ByteArrayOutputStream bmpStream = new ByteArrayOutputStream();
-
-        while (streamLength >= MAX_IMAGE_SIZE && compressQuality > 60) {
-
-            try {
-                bmpStream.flush(); //to avoid out of memory error
-                bmpStream.reset();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            compressQuality -= 10;
-            bitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, bmpStream);
-
-            byte[] bmpPicByteArray = bmpStream.toByteArray();
-            streamLength = bmpPicByteArray.length;
-
-            DebugLog.d("Compressed Image Size: " + streamLength);
-        }
-
-        FileOutputStream fo;
-
-        try {
-            fo = new FileOutputStream(f);
-            fo.write(bmpStream.toByteArray());
-            fo.flush();
-            fo.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void onClick(View v) {
+        super.onBackPressed();
     }
 }

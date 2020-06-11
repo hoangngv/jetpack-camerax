@@ -34,14 +34,6 @@ public class DataManager {
         DebugLog.d("SetContext:" + this.mContext);
     }
 
-    public synchronized void setScreenResolution(Size size) {
-        mScreenResolution = size;
-    }
-
-    public synchronized Size getScreenResolution() {
-        return mScreenResolution;
-    }
-
 
     public synchronized void setExifImage(Hashtable<String, String> hash) {
         mExifImage = hash;
