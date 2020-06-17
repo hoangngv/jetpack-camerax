@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraX;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureConfig;
+import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.core.PreviewConfig;
 import androidx.core.app.ActivityCompat;
@@ -19,19 +20,19 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Rational;
 import android.util.Size;
-import android.view.Display;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.camerax_vsmart.Utils.AppConstants;
@@ -47,19 +48,21 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class CameraActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String DATE_FORMAT = "yyMMdd_kkmmss";
     private int REQUEST_CODE_PERMISSIONS = 101;
     private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
     TextureView textureView;
-    private ImageButton btnBack;
+    private ImageButton btnBack, btnCapture;
     private ImageView ivRectFrame;
+    private TextView tvUserWarning;
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_camera);
 
         initComponents();
         initEvents();
@@ -74,7 +77,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initComponents(){
         textureView = findViewById(R.id.tv_camera_preview);
         btnBack = findViewById(R.id.btn_back);
+        btnCapture = findViewById(R.id.btn_capture);
         ivRectFrame = findViewById(R.id.iv_frame_camera);
+        tvUserWarning = findViewById(R.id.tv_user_warning);
+        //displayDynamicView(tvUserWarning, 100, 300);
     }
 
     private void initEvents(){
@@ -88,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Rational aspectRatio = new Rational (textureView.getWidth(), textureView.getHeight());
         Size screen = new Size(textureView.getWidth(), textureView.getHeight()); //size of the screen
 
-        DebugLog.d("("+ screen.getWidth() + ", " + screen.getHeight() + ")");
+        DebugLog.d("[Capture Photo]: (width, height) = ("+ screen.getWidth() + ", " + screen.getHeight() + ")");
 
         PreviewConfig pConfig = new PreviewConfig.Builder().setTargetAspectRatio(aspectRatio).setTargetResolution(screen).build();
         Preview preview = new Preview(pConfig);
@@ -112,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         final ImageCapture imageCapture = new ImageCapture(imageCaptureConfig);
 
-        findViewById(R.id.btn_capture).setOnClickListener(new View.OnClickListener() {
+        btnCapture.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -129,13 +135,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onImageSaved(@NonNull File file) {
                         DebugLog.d("[Capture Photo] Run into onImageSaved");
-                        String msg = "Pic captured at " + file.getAbsolutePath();
+                        DebugLog.d("[Capture Photo] Image saved at: " + filePath);
+                        String msg = "Photo saved at " + file.getAbsolutePath();
                         Toast.makeText(getBaseContext(), msg,Toast.LENGTH_LONG).show();
 
                         DebugLog.d("[Canvas drawing] File size before being compressed: " + file.length());
 
-                        writeTextOntoImage(filePath, "(Long: X, Lat: Y)", 120, Color.GREEN, 200, 200);
+                        //writeTextOntoImage(filePath, "(Long: X, Lat: Y)", 120, Color.GREEN, 200, 200);
                         //reviewPicture(fileName);
+
+                        DebugLog.d("[Capture Photo] Image is saved successfully");
                     }
 
                     @Override
@@ -147,6 +156,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }
                 });
+
+                imageCapture.takePicture(new ImageCapture.OnImageCapturedListener() {
+                    @Override
+                    public void onCaptureSuccess(ImageProxy image, int rotationDegrees) {
+                        super.onCaptureSuccess(image, rotationDegrees);
+                        DebugLog.d("[Capture Photo] Capture Success");
+                    }
+
+                    @Override
+                    public void onError(ImageCapture.UseCaseError useCaseError, String message, @Nullable Throwable cause) {
+                        super.onError(useCaseError, message, cause);
+                    }
+                });
             }
         });
 
@@ -154,17 +176,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         CameraX.bindToLifecycle((LifecycleOwner)this, preview, imageCapture);
     }
 
-    private void reviewPicture(String imgName) {
-        if (imgName != null) {
+    private void reviewPicture(String filePath) {
+        if (filePath != null) {
             DebugLog.d("[Capture Photo] Prepare to review photo");
-            Intent intent = new Intent(this, PictureReviewScreen.class);
-            intent.putExtra(AppConstants.Common.IMG_NAME, imgName);
+            Intent intent = new Intent(this, GalleryScreen.class);
+            intent.putExtra(AppConstants.Common.IMG_NAME, filePath);
             startActivity(intent);
             //finish();
         } else {
             Toast.makeText(this, R.string.unable_open_photo, Toast.LENGTH_SHORT).show();
         }
-        finish();
+        //finish();
     }
 
     private void updateTransform(){
@@ -347,5 +369,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         super.onBackPressed();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
+
+    // display text view at specified location
+    private void displayDynamicView(View view, float x, float y){
+        view.setX(x);
+        view.setY(y);
     }
 }

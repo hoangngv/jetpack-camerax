@@ -3,4 +3,10 @@
     <string name="unable_open_photo">Unable to open photo</string>
     <string name="toast_press_back">Press Back again to quit application</string>
     <string name="camera_user_guide"> You should capture image within this rectangle view </string>
+    <string name="open_camera">Open Camera</string>
+    <string name="open_gallery">Open Gallery</string>
+
+    // ImageViewer
+    <string name="share">Share</string>
+
 </resources>

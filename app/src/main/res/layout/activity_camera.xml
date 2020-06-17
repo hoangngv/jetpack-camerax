@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".CameraActivity">
 
     <TextureView
         android:id="@+id/tv_camera_preview"
@@ -51,6 +51,24 @@
         app:layout_constraintTop_toTopOf="@id/iv_frame_camera"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <!--<LinearLayout-->
+        <!--android:id="@+id/ll_capture_area"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="horizontal"-->
+        <!--android:gravity="center"-->
+        <!--app:layout_constraintStart_toStartOf="parent"-->
+        <!--app:layout_constraintBottom_toBottomOf="parent">-->
+
+        <!--<ImageButton-->
+            <!--android:id="@+id/btn_capture"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_margin="20dp"-->
+            <!--android:background="@drawable/ic_button_capture" />-->
+
+    <!--</LinearLayout>-->
 
     <ImageButton
         android:id="@+id/btn_capture"

@@ -4,6 +4,7 @@ public class AppConstants {
     public class Common{
         public static final int COMMON_REQUEST_PERMISSION_CODE = 9999;
         public static final String IMG_NAME = "imgName";
+        public static final String IMG_PATH = "IMG_PATH";
     }
 
     public class CameraConfig{
