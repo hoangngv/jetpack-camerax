@@ -1,11 +1,11 @@
 package com.example.camerax_vsmart;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-
 import com.example.camerax_vsmart.Utils.AppUtils;
 import com.example.camerax_vsmart.Utils.DebugLog;
+import com.example.camerax_vsmart.Utils.ImageOverlayView;
+import com.example.camerax_vsmart.Utils.StylingOptions;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.stfalcon.frescoimageviewer.ImageViewer;
 
@@ -21,7 +21,10 @@ public class GalleryScreen extends AppCompatActivity {
             R.id.ninethImage
     };
 
-    protected String[] posters;
+    protected String[] images;
+
+    private ImageOverlayView overlayView;
+    private StylingOptions options;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,17 +35,50 @@ public class GalleryScreen extends AppCompatActivity {
     }
 
     protected void showPicker(int startPosition) {
-        new ImageViewer.Builder<>(this, posters)
+        ImageViewer.Builder builder = new ImageViewer.Builder<>(this, images)
                 .setStartPosition(startPosition)
-                .show();
+                .setOnDismissListener(getDismissListener());
+
+        builder.hideStatusBar(options.get(StylingOptions.Property.HIDE_STATUS_BAR));
+        builder.allowSwipeToDismiss(options.get(StylingOptions.Property.SWIPE_TO_DISMISS));
+        builder.allowZooming(options.get(StylingOptions.Property.ZOOMING));
+
+        if (options.get(StylingOptions.Property.SHOW_OVERLAY)) {
+            overlayView = new ImageOverlayView(this);
+            builder.setOverlayView(overlayView);
+            builder.setImageChangeListener(getImageChangeListener());
+        }
+
+        builder.show();
+    }
+
+    private ImageViewer.OnImageChangeListener getImageChangeListener() {
+        return new ImageViewer.OnImageChangeListener() {
+            @Override
+            public void onImageChange(int position) {
+                // TODO
+                DebugLog.d("onImageChange");
+                String url = images[position];
+                overlayView.setShareText(url);
+            }
+        };
+    }
+
+    private ImageViewer.OnDismissListener getDismissListener() {
+        return new ImageViewer.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                // TODO
+                DebugLog.d("onDismiss");
+            }
+        };
     }
 
     private void initView() {
-        posters = AppUtils.getLocalImageUri();
-        int imgQuantity = posters.length;
-        for (int i = 0; i < imgQuantity; i++) {
-            Log.d("POSTERS", posters[i]);
-        }
+        options = new StylingOptions();
+
+        images = AppUtils.getLocalImageUri();
+        int imgQuantity = images.length;
 
         for (int i = 0; i < (imgQuantity < 9 ? imgQuantity : 9); i++) {
             SimpleDraweeView drawee = (SimpleDraweeView) findViewById(ids[i]);
@@ -57,7 +93,7 @@ public class GalleryScreen extends AppCompatActivity {
                 showPicker(startPosition);
             }
         });
-        drawee.setImageURI(posters[startPosition]);
+        drawee.setImageURI(images[startPosition]);
     }
 
     @Override

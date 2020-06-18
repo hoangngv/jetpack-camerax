@@ -5,6 +5,8 @@ import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class AppUtils {
     public static String getFileDir(String fileName) {
@@ -20,7 +22,6 @@ public class AppUtils {
     private static final String VSMART_DIRECTORY = Environment.getExternalStorageDirectory().toString() + "/CAMERA-VSMART";
 
     public static String[] getLocalImageUri() {
-        Log.d("POSTERS", VSMART_DIRECTORY);
         ArrayList<String> imagePaths = new ArrayList<String>();
         File[] files = new File(VSMART_DIRECTORY).listFiles();
         for (File file : files) {
@@ -28,6 +29,8 @@ public class AppUtils {
                 imagePaths.add("file://" + file.getAbsolutePath());
             }
         }
-        return imagePaths.toArray(new String[imagePaths.size()]);
+        String[] sortedPaths = imagePaths.toArray(new String[imagePaths.size()]);
+        Arrays.sort(sortedPaths, Collections.reverseOrder(String.CASE_INSENSITIVE_ORDER));
+        return sortedPaths;
     }
 }
