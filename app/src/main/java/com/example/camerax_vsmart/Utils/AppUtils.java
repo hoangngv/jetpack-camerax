@@ -27,6 +27,7 @@ public class AppUtils {
         for (File file : files) {
             if (file.isFile()){
                 imagePaths.add("file://" + file.getAbsolutePath());
+                DebugLog.d("AppUtils: " + "file://" + file.getAbsolutePath());
             }
         }
         String[] sortedPaths = imagePaths.toArray(new String[imagePaths.size()]);
