@@ -2,13 +2,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_margin="5dp"
-    android:padding="5dp">
+    android:fitsSystemWindows="true" >
 
-    <com.facebook.drawee.view.SimpleDraweeView
+    <com.example.camerax_vsmart.CustomSimpleDraweeView
         android:id="@+id/displayedImage"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

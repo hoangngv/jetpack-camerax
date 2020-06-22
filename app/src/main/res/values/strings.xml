@@ -8,6 +8,7 @@
 
     // ImageViewer
     <string name="share">Share</string>
+    <string name="delete_photo">Delete</string>
 
     <string-array name="options">
         <item>hide status bar</item>

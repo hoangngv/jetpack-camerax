@@ -32,7 +32,7 @@
         <item name="android:textAllCaps">true</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@color/colorAccent</item>
+        <item name="android:textColor">@color/colorPrimary</item>
     </style>
 
     <style name="DescriptionText" parent="AppTheme">

@@ -1,11 +1,13 @@
 package com.example.camerax_vsmart;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.bumptech.glide.Glide;
 import com.example.camerax_vsmart.Utils.DebugLog;
 import com.example.camerax_vsmart.Utils.ImageOverlayView;
 import com.example.camerax_vsmart.Utils.StylingOptions;
@@ -41,14 +43,14 @@ public class CustomGridAdapter extends BaseAdapter {
         return position;
     }
 
-    @Override
+    @SuppressLint("InflateParams")
     public View getView(int position, View convertView, ViewGroup parent) {
         mStyleOptions = new StylingOptions();
         ViewHolder holder;
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.grid_item, null);
             holder = new ViewHolder();
-            holder.imageView = (SimpleDraweeView) convertView.findViewById(R.id.displayedImage);
+            holder.imageView = convertView.findViewById(R.id.displayedImage);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -58,26 +60,6 @@ public class CustomGridAdapter extends BaseAdapter {
 
         return convertView;
     }
-
-//    @Override
-//    public View getView(int position, View convertView, ViewGroup parent) {
-//        mStyleOptions = new StylingOptions();
-//        SimpleDraweeView view = (SimpleDraweeView) convertView;
-//        if (view == null) {
-//            view = new SimpleDraweeView(mContext);
-//            view = (SimpleDraweeView) mInflater.inflate(R.layout.grid_item, null);
-//            view.setLayoutParams(new GridView.LayoutParams(200, 200));
-//            view.setScaleType(ImageView.ScaleType.FIT_CENTER);
-//            view.setPadding(1, 1, 1, 1);
-//            view = (SimpleDraweeView) convertView.findViewById(R.id.displayedImage);
-//        } else {
-//            view = (SimpleDraweeView) convertView;
-//        }
-//
-//        initDrawee(view, position);
-//
-//        return view;
-//    }
 
     static class ViewHolder {
         SimpleDraweeView imageView;
@@ -92,7 +74,8 @@ public class CustomGridAdapter extends BaseAdapter {
             }
         });
         DebugLog.d("[Custom Grid] images array length: " + mImages.length);
-        drawee.setImageURI(mImages[startPosition]);
+        Glide.with(mContext).load(mImages[startPosition]).into(drawee);
+        //drawee.setImageURI(mImages[startPosition]);
     }
 
     private void showImage(int startPosition) {
@@ -118,7 +101,7 @@ public class CustomGridAdapter extends BaseAdapter {
             @Override
             public void onImageChange(int position) {
                 // TODO
-                DebugLog.d("onImageChange");
+                DebugLog.d("[Custom Grid] ImageViewer.onImageChange...");
                 String url = mImages[position];
                 mImageOverlayView.setShareText(url);
             }
@@ -130,7 +113,7 @@ public class CustomGridAdapter extends BaseAdapter {
             @Override
             public void onDismiss() {
                 // TODO
-                DebugLog.d("onDismiss");
+                DebugLog.d("[Custom Grid] ImageViewer.onDismiss...");
             }
         };
     }

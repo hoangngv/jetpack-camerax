@@ -5,15 +5,12 @@ import android.content.Intent;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import com.example.camerax_vsmart.R;
 
 public class ImageOverlayView extends RelativeLayout {
 
-    private TextView tvDescription;
-
-    private String sharingText;
+    private String mSharedText;
 
     public ImageOverlayView(Context context) {
         super(context);
@@ -30,26 +27,21 @@ public class ImageOverlayView extends RelativeLayout {
         init();
     }
 
-    public void setDescription(String description) {
-        tvDescription.setText(description);
-    }
-
     public void setShareText(String text) {
-        this.sharingText = text;
+        this.mSharedText = text;
     }
 
     private void sendShareIntent() {
         Intent sendIntent = new Intent();
         sendIntent.setAction(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TEXT, sharingText);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, mSharedText);
         sendIntent.setType("text/plain");
         getContext().startActivity(sendIntent);
     }
 
     private void init() {
         View view = inflate(getContext(), R.layout.view_image_overlay, this);
-        tvDescription = (TextView) view.findViewById(R.id.tvDescription);
-        view.findViewById(R.id.btnShare).setOnClickListener(new OnClickListener() {
+        view.findViewById(R.id.btnDelete).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendShareIntent();
